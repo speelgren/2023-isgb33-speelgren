@@ -45,6 +45,7 @@ public class Stub {
 		
 		JTextArea searchDisplay = new JTextArea("");
 		searchDisplay.setLineWrap(true);
+		searchDisplay.setEditable(false);
 		JScrollPane scrollPane = new JScrollPane(searchDisplay);
 		
 		JPanel searchInputButtonPanel = new JPanel();
@@ -83,8 +84,8 @@ public class Stub {
 		            AggregateIterable<Document> myDocs = collection.aggregate(Arrays.asList(
 		            		Aggregates.match(Filters.eq("genres", genre)), /* Filtrera efter genre */
 		                    Aggregates.project(Projections.include("title", "year")),
-		                    Aggregates.limit(10), /* Räddaren i nöden. Trodde jag behövde "count" antalet dokument först. */
-		                    Aggregates.sort(Sorts.descending("title")) /* Från Z - A */
+		                    Aggregates.sort(Sorts.descending("title")), /* Från Z - A */
+		                    Aggregates.limit(10)
 		            ));
 		            	
 		            try (MongoCursor<Document> iterator = myDocs.iterator()) {
@@ -106,8 +107,17 @@ public class Stub {
 		                	 
 		                	Document myDoc = iterator.next();
 		                    String title = myDoc.getString("title");
-		                    Integer year = myDoc.getInteger("year");
-		                    resultBuilder.append(title).append(", ").append(year).append("\n");
+
+		                    /* För att hantera year. Year kunde tydligen vara både sträng och int. */
+		                    if (myDoc.get("year") instanceof Integer) {
+
+		                    	int year = myDoc.getInteger("year");
+		                        resultBuilder.append(title).append(", ").append(year).append('\n');
+		                    } else if (myDoc.get("year") instanceof String) {
+		                    	
+		                    	String year = myDoc.getString("year");
+		                        resultBuilder.append(title).append(", ").append(year).append('\n');
+		                    }
 		                }
 
 						 searchDisplay.setText(resultBuilder.toString());
